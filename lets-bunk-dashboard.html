@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Let's Bunk – Live Results Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a; --card: #141414; --border: #252525;
+    --accent: #f5c842; --accent2: #ff6b35; --accent3: #4ade80;
+    --text: #f0ede6; --muted: #6a6660;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+
+  .hero { background: linear-gradient(135deg, #0f0d00 0%, #0a0a0a 70%); border-bottom: 1px solid var(--border); padding: 48px 24px 40px; text-align: center; position: relative; overflow: hidden; }
+  .hero::before { content: ''; position: absolute; top: -80px; left: 50%; transform: translateX(-50%); width: 600px; height: 300px; background: radial-gradient(ellipse, rgba(245,200,66,0.1) 0%, transparent 70%); pointer-events: none; }
+  .hero-tag { display: inline-block; background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.3); color: var(--accent); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; padding: 4px 14px; border-radius: 100px; margin-bottom: 16px; font-weight: 500; }
+  .hero h1 { font-family: 'Syne', sans-serif; font-weight: 800; font-size: clamp(28px, 6vw, 56px); letter-spacing: -1.5px; margin-bottom: 10px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { font-size: 14px; color: var(--muted); }
+
+  .stats-bar { display: flex; justify-content: center; gap: 40px; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+  .stat-item { text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; color: var(--accent); line-height: 1; }
+  .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+  .refresh-bar { display: flex; justify-content: center; align-items: center; gap: 12px; padding: 14px 24px; border-bottom: 1px solid var(--border); }
+  .refresh-btn { background: rgba(245,200,66,0.1); border: 1px solid rgba(245,200,66,0.25); color: var(--accent); font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; padding: 6px 18px; border-radius: 100px; cursor: pointer; transition: background 0.15s; }
+  .refresh-btn:hover { background: rgba(245,200,66,0.2); }
+  .last-updated { font-size: 12px; color: var(--muted); }
+
+  .dashboard { max-width: 1100px; margin: 0 auto; padding: 32px 20px 60px; display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+
+  .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .chart-card.wide { grid-column: 1 / -1; }
+  .chart-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--text); }
+  .chart-sub { font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+  .chart-wrap { position: relative; }
+
+  .bar-chart { display: flex; flex-direction: column; gap: 12px; }
+  .bar-row { display: flex; flex-direction: column; gap: 5px; }
+  .bar-meta { display: flex; justify-content: space-between; font-size: 12px; }
+  .bar-label { color: var(--text); font-weight: 400; max-width: 75%; line-height: 1.3; }
+  .bar-count { color: var(--accent); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; }
+  .bar-track { height: 8px; background: var(--border); border-radius: 100px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 0.8s cubic-bezier(.4,0,.2,1); }
+
+  .scale-display { display: flex; flex-direction: column; gap: 8px; }
+  .scale-avg { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 48px; color: var(--accent); line-height: 1; margin-bottom: 8px; }
+  .scale-avg span { font-size: 20px; color: var(--muted); }
+  .scale-dist { display: flex; gap: 6px; align-items: flex-end; height: 60px; }
+  .scale-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .scale-bar-inner { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; transition: height 0.8s cubic-bezier(.4,0,.2,1); opacity: 0.85; }
+  .scale-bar-num { font-size: 11px; color: var(--muted); font-family: 'Syne', sans-serif; font-weight: 700; }
+
+  .loading { text-align: center; padding: 80px 24px; color: var(--muted); }
+  .loading-spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg { text-align: center; padding: 60px 24px; }
+  .error-msg h3 { font-family: 'Syne', sans-serif; color: var(--accent2); margin-bottom: 8px; }
+  .error-msg p { color: var(--muted); font-size: 14px; line-height: 1.7; }
+  .error-msg code { background: var(--card); border: 1px solid var(--border); padding: 2px 8px; border-radius: 6px; font-size: 13px; color: var(--accent); }
+
+  .empty-state { text-align: center; padding: 60px 24px; color: var(--muted); font-size: 14px; }
+  .empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
+
+  @media (max-width: 600px) { .stats-bar { gap: 24px; } .dashboard { grid-template-columns: 1fr; } .chart-card.wide { grid-column: 1; } }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-tag">Live Results</div>
+  <h1>Let's <span>Bunk</span> — Dashboard</h1>
+  <p>Real-time survey responses from college travellers</p>
+</div>
+
+<div class="stats-bar">
+  <div class="stat-item"><div class="stat-num" id="totalCount">—</div><div class="stat-label">Total Responses</div></div>
+  <div class="stat-item"><div class="stat-num" id="avgUrge">—</div><div class="stat-label">Avg Travel Urge</div></div>
+  <div class="stat-item"><div class="stat-num" id="canceledPct">—</div><div class="stat-label">Canceled a Trip</div></div>
+  <div class="stat-item"><div class="stat-num" id="wantPartnerPct">—</div><div class="stat-label">Need Travel Partners</div></div>
+</div>
+
+<div class="refresh-bar">
+  <button class="refresh-btn" onclick="loadData()">↻ Refresh</button>
+  <span class="last-updated" id="lastUpdated">Not loaded yet</span>
+</div>
+
+<div id="mainContent">
+  <div class="loading"><div class="loading-spinner"></div><p>Loading responses...</p></div>
+</div>
+
+<script>
+  // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT URL HERE (same one as the survey)
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuINF4hrXezKSrtcWFqxwrXQDUZtT4j8JUPvOq4y99t_USHDO7dL0Tqlan6sAd8BX0/exec";
+
+  function countValues(rows, key) {
+    const counts = {};
+    rows.forEach(row => {
+      const val = row[key] || '';
+      val.split(',').map(v => v.trim()).filter(Boolean).forEach(v => {
+        counts[v] = (counts[v] || 0) + 1;
+      });
+    });
+    return counts;
+  }
+
+  function avgScale(rows, key) {
+    const nums = rows.map(r => parseFloat(r[key])).filter(n => !isNaN(n));
+    if (!nums.length) return 0;
+    return (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(1);
+  }
+
+  function scaleDist(rows, key) {
+    const dist = {1:0,2:0,3:0,4:0,5:0};
+    rows.forEach(r => { const v = parseInt(r[key]); if (v >= 1 && v <= 5) dist[v]++; });
+    return dist;
+  }
+
+  function renderBarChart(counts, total) {
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    if (!sorted.length) return '<div class="empty-state"><div class="emoji">📭</div>No data yet</div>';
+    return `<div class="bar-chart">${sorted.map(([label, count]) => `
+      <div class="bar-row">
+        <div class="bar-meta">
+          <span class="bar-label">${label}</span>
+          <span class="bar-count">${count} (${Math.round(count/total*100)}%)</span>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/sorted[0][1]*100)}%"></div></div>
+      </div>`).join('')}</div>`;
+  }
+
+  function renderScaleCard(avg, dist, total) {
+    const maxCount = Math.max(...Object.values(dist), 1);
+    const bars = [1,2,3,4,5].map(n => {
+      const h = Math.max(4, Math.round((dist[n]/maxCount)*52));
+      return `<div class="scale-bar-wrap">
+        <div class="scale-bar-inner" style="height:${h}px"></div>
+        <div class="scale-bar-num">${n}</div>
+      </div>`;
+    }).join('');
+    return `<div class="scale-avg">${avg}<span>/5</span></div><div class="scale-dist">${bars}</div>`;
+  }
+
+  async function loadData() {
+    document.getElementById('lastUpdated').textContent = 'Loading...';
+
+    if (SCRIPT_URL === 'https://script.google.com/macros/s/AKfycbzuINF4hrXezKSrtcWFqxwrXQDUZtT4j8JUPvOq4y99t_USHDO7dL0Tqlan6sAd8BX0/exec') {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="error-msg">
+          <h3>⚙️ Setup Required</h3>
+          <p>Open this file and replace <code>https://script.google.com/macros/s/AKfycbzuINF4hrXezKSrtcWFqxwrXQDUZtT4j8JUPvOq4y99t_USHDO7dL0Tqlan6sAd8BX0/exec</code><br>with your Google Apps Script deployment URL.<br><br>Check the setup guide in <code>google-apps-script.js</code> for instructions.</p>
+        </div>`;
+      return;
+    }
+
+    try {
+      const res = await fetch(SCRIPT_URL);
+      const data = await res.json();
+      const rows = data.rows || [];
+
+      document.getElementById('totalCount').textContent = rows.length;
+
+      if (rows.length === 0) {
+        document.getElementById('avgUrge').textContent = '—';
+        document.getElementById('canceledPct').textContent = '—';
+        document.getElementById('wantPartnerPct').textContent = '—';
+        document.getElementById('mainContent').innerHTML = `<div class="empty-state" style="padding:80px 24px"><div class="emoji">📋</div><p>No responses yet — share your survey link!</p></div>`;
+        return;
+      }
+
+      const total = rows.length;
+      const urgeAvg = avgScale(rows, 'Q2: Travel Urge (1-5)');
+      const canceled = rows.filter(r => (r['Q6: Trip Canceled']||'').toLowerCase().includes('yes')).length;
+      const wantPartner = rows.filter(r => (r['Q5: Lack of Partners']||'').toLowerCase().includes('yes')).length;
+
+      document.getElementById('avgUrge').textContent = urgeAvg + '/5';
+      document.getElementById('canceledPct').textContent = Math.round(canceled/total*100) + '%';
+      document.getElementById('wantPartnerPct').textContent = Math.round(wantPartner/total*100) + '%';
+
+      const yearCounts    = countValues(rows, 'Q1: College Year');
+      const hurdleCounts  = countValues(rows, 'Q3: Biggest Hurdle');
+      const appCounts     = countValues(rows, 'Q4: Timetable App');
+      const partnerCounts = countValues(rows, 'Q5: Lack of Partners');
+      const compatCounts  = countValues(rows, 'Q7: Compatibility Factors');
+      const budgetCounts  = countValues(rows, 'Q9: Weekend Budget');
+      const dealsCounts   = countValues(rows, 'Q10: Student Deals');
+      const guideCounts   = countValues(rows, 'Q12: Guide Benefit');
+
+      const idAvg   = avgScale(rows, 'Q8: Verified ID Importance (1-5)');
+      const idDist  = scaleDist(rows, 'Q8: Verified ID Importance (1-5)');
+      const stressAvg  = avgScale(rows, 'Q11: Expense Stress (1-5)');
+      const stressDist = scaleDist(rows, 'Q11: Expense Stress (1-5)');
+
+      document.getElementById('mainContent').innerHTML = `
+        <div class="dashboard">
+
+          <div class="chart-card">
+            <div class="chart-title">📚 College Year</div>
+            <div class="chart-sub">Which year are respondents in?</div>
+            ${renderBarChart(yearCounts, total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">✈️ Would Use Timetable App?</div>
+            <div class="chart-sub">Appetite for the core feature</div>
+            ${renderBarChart(appCounts, total)}
+          </div>
+
+          <div class="chart-card wide">
+            <div class="chart-title">🚧 Biggest Hurdles for Planning a Trip</div>
+            <div class="chart-sub">Select all that apply — total selections across ${total} respondents</div>
+            ${renderBarChart(hurdleCounts, rows.reduce((s,r) => s + (r['Q3: Biggest Hurdle']||'').split(',').filter(Boolean).length, 0) || total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">👥 Lack of Travel Partners</div>
+            <div class="chart-sub">Can't travel due to no partners?</div>
+            ${renderBarChart(partnerCounts, total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">💸 Weekend Budget Range</div>
+            <div class="chart-sub">How much are students willing to spend?</div>
+            ${renderBarChart(budgetCounts, total)}
+          </div>
+
+          <div class="chart-card wide">
+            <div class="chart-title">🤝 Squad Compatibility Factors</div>
+            <div class="chart-sub">What matters most when matching with a travel squad?</div>
+            ${renderBarChart(compatCounts, rows.reduce((s,r) => s + (r['Q7: Compatibility Factors']||'').split(',').filter(Boolean).length, 0) || total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">🪪 Verified Student ID Importance</div>
+            <div class="chart-sub">Safety feature — average rating</div>
+            ${renderScaleCard(idAvg, idDist, total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">💰 Expense Stress Level</div>
+            <div class="chart-sub">How stressful is splitting bills?</div>
+            ${renderScaleCard(stressAvg, stressDist, total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">🎁 Student Deals Motivation</div>
+            <div class="chart-sub">Would exclusive deals drive bookings?</div>
+            ${renderBarChart(dealsCounts, total)}
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">🧭 Most Valued Guide Benefit</div>
+            <div class="chart-sub">What do students want from a trip mentor?</div>
+            ${renderBarChart(guideCounts, rows.reduce((s,r) => s + (r['Q12: Guide Benefit']||'').split(',').filter(Boolean).length, 0) || total)}
+          </div>
+
+        </div>`;
+
+      document.getElementById('lastUpdated').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+    } catch (err) {
+      document.getElementById('mainContent').innerHTML = `
+        <div class="error-msg">
+          <h3>⚠️ Could not load data</h3>
+          <p>Make sure your Apps Script URL is correct and the deployment is set to <strong>"Anyone"</strong> access.<br><br>Error: ${err.message}</p>
+        </div>`;
+      document.getElementById('lastUpdated').textContent = 'Failed to load';
+    }
+  }
+
+  loadData();
+  // Auto-refresh every 60 seconds
+  setInterval(loadData, 60000);
+</script>
+</body>
+</html>
