@@ -247,7 +247,7 @@
 
 <script>
   // ⚠️ PASTE YOUR GOOGLE APPS SCRIPT URL HERE (from deployment step)
-  const SCRIPT_URL = https://script.google.com/macros/s/AKfycbzuINF4hrXezKSrtcWFqxwrXQDUZtT4j8JUPvOq4y99t_USHDO7dL0Tqlan6sAd8BX0/exec;
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzuINF4hrXezKSrtcWFqxwrXQDUZtT4j8JUPvOq4y99t_USHDO7dL0Tqlan6sAd8BX0/exec";
 
   const answers = {};
 
@@ -281,7 +281,7 @@
   });
 
   function countAnswered() {
-    let count = 0 
+    let count = 0
     for (let i = 1; i <= 12; i++) {
       const v = answers['q' + i];
       if (v !== undefined && (Array.isArray(v) ? v.length > 0 : v !== '')) count++;
