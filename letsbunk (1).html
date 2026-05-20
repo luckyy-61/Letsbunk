@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Let's Bunk — Student Travel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #3D2B8E;
+    --purple-light: #6C5CE7;
+    --purple-pale: #EAE6FF;
+    --yellow: #F5C518;
+    --yellow-light: #FFF8D6;
+    --red: #E84393;
+    --green: #00C47A;
+    --blue: #4A90D9;
+    --bg: #F8F7FF;
+    --card: #FFFFFF;
+    --text: #1A1033;
+    --muted: #7B6FA0;
+    --border: #E2DEFF;
+    --shadow: 0 2px 16px rgba(61,43,142,0.09);
+    --shadow-hover: 0 8px 32px rgba(61,43,142,0.18);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── SCREENS ── */
+  .screen { display: none; min-height: 100vh; flex-direction: column; animation: fadeIn .35s ease; }
+  .screen.active { display: flex; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  /* ── NAV BAR ── */
+  .app-nav {
+    background: var(--card);
+    border-top: 2px solid var(--border);
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0 14px;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 100;
+    box-shadow: 0 -4px 20px rgba(61,43,142,0.08);
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 10px; border-radius: 12px;
+    transition: all .2s; color: var(--muted); font-size: 11px; font-weight: 500;
+  }
+  .nav-item .nav-icon { font-size: 22px; line-height: 1; }
+  .nav-item.active { color: var(--purple); }
+  .nav-item.active .nav-icon { transform: scale(1.15); }
+
+  /* ── TOP BAR ── */
+  .top-bar {
+    background: var(--card);
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .top-bar h1 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--purple); }
+  .top-bar .subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .avatar-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 16px; cursor: pointer; border: none;
+    box-shadow: 0 2px 8px rgba(61,43,142,.25);
+  }
+
+  .scroll-area { flex: 1; overflow-y: auto; padding: 16px 16px 90px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card); border-radius: 18px; padding: 18px;
+    box-shadow: var(--shadow); margin-bottom: 14px;
+    border: 1px solid var(--border); transition: box-shadow .2s;
+  }
+  .card:hover { box-shadow: var(--shadow-hover); }
+
+  /* ── BADGES ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 100px; font-size: 11px; font-weight: 600;
+  }
+  .badge-green { background: #DFFAF0; color: #00A864; }
+  .badge-yellow { background: var(--yellow-light); color: #B58A00; }
+  .badge-purple { background: var(--purple-pale); color: var(--purple); }
+  .badge-red { background: #FFE8F5; color: var(--red); }
+
+  /* ── BUTTONS ── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 12px 22px; border-radius: 14px; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 600; cursor: pointer; border: none;
+    transition: all .2s; white-space: nowrap;
+  }
+  .btn-primary { background: var(--purple); color: white; box-shadow: 0 4px 14px rgba(61,43,142,.3); }
+  .btn-primary:hover { background: var(--purple-light); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(61,43,142,.35); }
+  .btn-outline { background: transparent; color: var(--purple); border: 2px solid var(--purple); }
+  .btn-outline:hover { background: var(--purple-pale); }
+  .btn-green { background: var(--green); color: white; box-shadow: 0 4px 14px rgba(0,196,122,.3); }
+  .btn-green:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  .btn-yellow { background: var(--yellow); color: var(--text); }
+  .btn-sm { padding: 8px 14px; font-size: 12px; border-radius: 10px; }
+  .btn-full { width: 100%; }
+
+  /* ── STAT CHIPS ── */
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat-chip {
+    background: var(--card); border-radius: 16px; padding: 16px;
+    border: 1px solid var(--border); text-align: center; box-shadow: var(--shadow);
+  }
+  .stat-chip .val { font-family: 'Syne', sans-serif; font-size: 26px; font-weight: 800; color: var(--purple); }
+  .stat-chip .lbl { font-size: 11px; color: var(--muted); margin-top: 3px; font-weight: 500; }
+
+  /* ── TAG STRIP ── */
+  .tag-strip { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
+  .tag-strip::-webkit-scrollbar { display: none; }
+  .tag { padding: 7px 14px; border-radius: 100px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all .2s; white-space: nowrap; border: 2px solid transparent; }
+  .tag.active { background: var(--purple); color: white; }
+  .tag:not(.active) { background: var(--card); color: var(--muted); border-color: var(--border); }
+
+  /* ──────────────────────────────────────
+     SCREEN 1 — SPLASH / ONBOARDING
+  ────────────────────────────────────── */
+  #splash {
+    background: linear-gradient(160deg, #F8F7FF 0%, #EDE9FF 60%, #F8F7FF 100%);
+    align-items: center; justify-content: center; text-align: center; padding: 40px 28px;
+  }
+  .splash-plane {
+    font-size: 56px; margin-bottom: 10px; animation: float 3s ease-in-out infinite;
+  }
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(-5deg)} 50%{transform:translateY(-12px) rotate(5deg)} }
+  .splash-logo { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: var(--purple); line-height: 1; }
+  .splash-logo span { color: var(--yellow); }
+  .splash-tagline { font-size: 14px; color: var(--muted); margin: 10px 0 32px; font-style: italic; }
+  .splash-features { display: flex; flex-direction: column; gap: 12px; width: 100%; margin-bottom: 36px; }
+  .splash-feat {
+    background: white; border-radius: 16px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 14px; text-align: left;
+    border: 1px solid var(--border); box-shadow: var(--shadow);
+  }
+  .splash-feat .ico { font-size: 26px; flex-shrink: 0; }
+  .splash-feat strong { display: block; font-size: 13px; font-weight: 700; color: var(--text); }
+  .splash-feat span { font-size: 11px; color: var(--muted); }
+
+  /* ──────────────────────────────────────
+     SCREEN 2 — HOME FEED
+  ────────────────────────────────────── */
+  .trip-card { position: relative; overflow: hidden; }
+  .trip-banner {
+    height: 130px; border-radius: 12px; margin: -18px -18px 14px;
+    display: flex; align-items: flex-end; padding: 12px 16px;
+    position: relative; overflow: hidden;
+  }
+  .trip-banner::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(transparent 30%, rgba(0,0,0,0.55));
+  }
+  .trip-banner .emoji-bg {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 70px; filter: blur(1px) opacity(0.4); z-index: 0;
+  }
+  .trip-banner-title { position: relative; z-index: 2; color: white; font-family: 'Syne',sans-serif; font-size: 18px; font-weight: 800; }
+  .trip-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .trip-price { font-family: 'Syne',sans-serif; font-size: 20px; font-weight: 800; color: var(--purple); }
+  .trip-price small { font-size: 11px; color: var(--muted); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+  .trip-footer { display: flex; align-items: center; justify-content: space-between; }
+  .avatars { display: flex; }
+  .avatars .av {
+    width: 28px; height: 28px; border-radius: 50%; border: 2px solid white;
+    background: linear-gradient(135deg, var(--purple-light), var(--red));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: white; font-weight: 700; margin-left: -8px;
+  }
+  .avatars .av:first-child { margin-left: 0; }
+
+  .imin-btn {
+    background: var(--green); color: white; border: none; border-radius: 100px;
+    padding: 9px 18px; font-size: 13px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; transition: all .2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .imin-btn:hover { transform: scale(1.04); filter: brightness(1.08); }
+  .imin-btn.joined { background: var(--purple-pale); color: var(--purple); }
+
+  /* ──────────────────────────────────────
+     SCREEN 3 — EXPLORE / SEARCH
+  ────────────────────────────────────── */
+  .search-bar {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--card); border: 2px solid var(--border); border-radius: 14px;
+    padding: 12px 16px; margin-bottom: 16px;
+  }
+  .search-bar input {
+    flex: 1; border: none; outline: none; font-family: 'DM Sans', sans-serif;
+    font-size: 14px; background: transparent; color: var(--text);
+  }
+  .search-bar input::placeholder { color: var(--muted); }
+  .dest-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .dest-card {
+    border-radius: 16px; overflow: hidden; cursor: pointer;
+    position: relative; height: 110px;
+    background: var(--purple-pale);
+    display: flex; align-items: flex-end;
+    transition: transform .2s; box-shadow: var(--shadow);
+  }
+  .dest-card:hover { transform: scale(1.03); }
+  .dest-card .dest-emoji { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 52px; opacity: .6; }
+  .dest-card .dest-label { position: relative; z-index: 2; background: rgba(255,255,255,.88); width: 100%; padding: 8px 10px; font-weight: 700; font-size: 13px; color: var(--text); }
+  .dest-card .dest-label small { color: var(--muted); font-size: 10px; font-weight: 400; display: block; }
+
+  /* ──────────────────────────────────────
+     SCREEN 4 — PEAK VIBES QUIZ
+  ────────────────────────────────────── */
+  .quiz-header { text-align: center; margin-bottom: 24px; }
+  .quiz-progress-wrap { height: 8px; background: var(--border); border-radius: 100px; margin-bottom: 20px; overflow: hidden; }
+  .quiz-progress-bar { height: 100%; background: linear-gradient(90deg, var(--purple), var(--purple-light)); border-radius: 100px; transition: width .4s ease; }
+  .quiz-q { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 24px; color: var(--text); line-height: 1.35; }
+  .quiz-options { display: flex; flex-direction: column; gap: 12px; }
+  .quiz-opt {
+    background: var(--card); border: 2px solid var(--border); border-radius: 16px;
+    padding: 16px 18px; cursor: pointer; display: flex; align-items: center; gap: 14px;
+    font-size: 14px; font-weight: 500; transition: all .2s;
+  }
+  .quiz-opt:hover { border-color: var(--purple-light); background: var(--purple-pale); }
+  .quiz-opt.selected { border-color: var(--purple); background: var(--purple-pale); color: var(--purple); font-weight: 700; }
+  .quiz-opt .opt-ico { font-size: 24px; }
+  .quiz-result {
+    text-align: center; padding: 10px 0;
+  }
+  .result-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--purple), var(--purple-light));
+    color: white; font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800;
+    padding: 18px 30px; border-radius: 20px; margin: 20px 0;
+    box-shadow: 0 8px 24px rgba(61,43,142,.3);
+  }
+  .match-list { display: flex; flex-direction: column; gap: 10px; margin: 16px 0; }
+  .match-item {
+    background: var(--card); border-radius: 14px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 12px; border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  .match-av { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+
+  /* ──────────────────────────────────────
+     SCREEN 5 — PROFILE / VERIFICATION
+  ────────────────────────────────────── */
+  .profile-hero {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+    padding: 28px 20px 80px;
+    text-align: center; position: relative;
+  }
+  .profile-avatar {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: white; margin: 0 auto 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; box-shadow: 0 4px 16px rgba(0,0,0,.15);
+  }
+  .profile-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: white; }
+  .profile-college { color: rgba(255,255,255,.75); font-size: 13px; margin-top: 4px; }
+  .profile-body { padding: 16px; margin-top: -44px; }
+  .verify-card {
+    background: var(--card); border-radius: 20px; padding: 20px;
+    box-shadow: var(--shadow-hover); border: 1px solid var(--border); margin-bottom: 14px;
+  }
+  .verify-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .verify-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .verify-label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+  .verify-status { font-size: 18px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stats-cell { background: var(--card); border-radius: 14px; padding: 14px; text-align: center; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .stats-cell .n { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--purple); }
+  .stats-cell .l { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ──────────────────────────────────────
+     SCREEN 6 — POST TRIP
+  ────────────────────────────────────── */
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 6px; display: block; }
+  .form-input {
+    width: 100%; padding: 13px 16px; border-radius: 14px;
+    border: 2px solid var(--border); background: var(--card);
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: var(--text);
+    outline: none; transition: border-color .2s;
+  }
+  .form-input:focus { border-color: var(--purple); }
+  .form-input::placeholder { color: var(--muted); }
+  textarea.form-input { resize: none; min-height: 90px; }
+  .date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .icon-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .icon-tag { padding: 8px 12px; border-radius: 10px; border: 2px solid var(--border); background: var(--card); cursor: pointer; font-size: 18px; transition: all .15s; }
+  .icon-tag.selected { border-color: var(--purple); background: var(--purple-pale); }
+
+  /* ──────────────────────────────────────
+     SCREEN 7 — CHAT (squad)
+  ────────────────────────────────────── */
+  .chat-header {
+    background: var(--purple); color: white; padding: 16px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .chat-header .back { font-size: 20px; cursor: pointer; }
+  .chat-header h3 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; flex: 1; }
+  .chat-header small { font-size: 11px; opacity: .75; display: block; margin-top: 1px; }
+  .chat-area { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 75%; display: flex; flex-direction: column; gap: 2px; }
+  .msg.me { align-self: flex-end; align-items: flex-end; }
+  .msg.them { align-self: flex-start; }
+  .msg-bubble {
+    padding: 10px 14px; border-radius: 18px; font-size: 14px; line-height: 1.45;
+  }
+  .me .msg-bubble { background: var(--purple); color: white; border-bottom-right-radius: 4px; }
+  .them .msg-bubble { background: var(--card); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+  .msg-sender { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .msg-time { font-size: 10px; color: var(--muted); }
+  .chat-input-bar {
+    background: var(--card); border-top: 1px solid var(--border); padding: 12px 16px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .chat-input-bar input {
+    flex: 1; border: 2px solid var(--border); border-radius: 100px; padding: 10px 16px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none;
+    transition: border-color .2s;
+  }
+  .chat-input-bar input:focus { border-color: var(--purple); }
+  .send-btn {
+    width: 42px; height: 42px; border-radius: 50%; background: var(--purple); color: white;
+    border: none; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center;
+    transition: all .2s;
+  }
+  .send-btn:hover { background: var(--purple-light); transform: scale(1.08); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(26,16,51,.4);
+    display: none; align-items: flex-end; justify-content: center; z-index: 200;
+    backdrop-filter: blur(3px);
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--card); border-radius: 24px 24px 0 0;
+    padding: 24px; width: 100%; max-width: 480px;
+    animation: slideUp .3s ease;
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 100px; margin: 0 auto 20px; }
+  .modal-title { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 16px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-80px);
+    background: var(--purple); color: white; padding: 12px 22px; border-radius: 100px;
+    font-size: 13px; font-weight: 600; z-index: 300; transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+    white-space: nowrap; box-shadow: 0 8px 24px rgba(61,43,142,.35);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── SECTION HEADER ── */
+  .sec-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .sec-h h2 { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); }
+  .sec-h a { font-size: 12px; color: var(--purple); font-weight: 600; cursor: pointer; }
+
+  /* ── SPLIT BILLING ── */
+  .expense-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .expense-row:last-child { border-bottom: none; }
+  .expense-name { font-size: 14px; font-weight: 500; }
+  .expense-amt { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--purple); }
+  .you-owe { background: var(--yellow-light); border-radius: 14px; padding: 14px 16px; margin-top: 12px; display: flex; align-items: center; justify-content: space-between; }
+  .you-owe .label { font-size: 13px; color: var(--muted); }
+  .you-owe .amount { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; color: var(--text); }
+
+  /* ── HERO BANNER ── */
+  .hero-banner {
+    background: linear-gradient(135deg, var(--purple) 0%, var(--purple-light) 100%);
+    border-radius: 20px; padding: 22px 20px; margin-bottom: 16px; position: relative; overflow: hidden;
+  }
+  .hero-banner::before {
+    content: '✈️'; position: absolute; right: -10px; top: -10px;
+    font-size: 80px; opacity: .15; transform: rotate(-20deg);
+  }
+  .hero-banner h2 { color: white; font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .hero-banner p { color: rgba(255,255,255,.8); font-size: 12px; margin-bottom: 16px; }
+
+  /* scrollbar hide */
+  .scroll-area::-webkit-scrollbar, .chat-area::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ SPLASH ═══════════ -->
+<div class="screen active" id="splash">
+  <div class="splash-plane">✈️</div>
+  <div class="splash-logo">Let's<br><span>Bunk</span></div>
+  <p class="splash-tagline">Connecting Students. Enabling Adventures.</p>
+
+  <div class="splash-features">
+    <div class="splash-feat">
+      <div class="ico">🤝</div>
+      <div>
+        <strong>Squad Matching</strong>
+        <span>Find verified students with your vibe & budget</span>
+      </div>
+    </div>
+    <div class="splash-feat">
+      <div class="ico">🛡️</div>
+      <div>
+        <strong>Student ID Verified</strong>
+        <span>Real college students, every trip, every time</span>
+      </div>
+    </div>
+    <div class="splash-feat">
+      <div class="ico">💸</div>
+      <div>
+        <strong>Smart Split Billing</strong>
+        <span>Auto expense tracking, no awkward money talks</span>
+      </div>
+    </div>
+    <div class="splash-feat">
+      <div class="ico">🗺️</div>
+      <div>
+        <strong>Open Itinerary Feed</strong>
+        <span>Post or join day plans — instant squad formed</span>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-primary btn-full" style="font-size:16px;padding:16px;" onclick="goHome()">
+    Start Exploring 🚀
+  </button>
+  <p style="margin-top:12px;font-size:12px;color:var(--muted)">India's first student-verified travel platform</p>
+</div>
+
+<!-- ═══════════ HOME FEED ═══════════ -->
+<div class="screen" id="home">
+  <div class="top-bar">
+    <div>
+      <h1>Let's Bunk ✈️</h1>
+      <div class="subtitle">📍 Delhi NCR · 3 trips near you</div>
+    </div>
+    <button class="avatar-btn" onclick="showScreen('profile')">👤</button>
+  </div>
+
+  <div class="scroll-area">
+    <!-- Hero banner -->
+    <div class="hero-banner">
+      <h2>78% of students want to travel more 🌍</h2>
+      <p>Don't be the 65% who cancel trips because no one joins.<br>Your squad is waiting.</p>
+      <button class="btn btn-yellow btn-sm" onclick="showScreen('quiz')">Take Vibes Quiz 🎯</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="stat-row">
+      <div class="stat-chip"><div class="val">247</div><div class="lbl">Active Students</div></div>
+      <div class="stat-chip"><div class="val">18</div><div class="lbl">Open Trips Today</div></div>
+      <div class="stat-chip"><div class="val">8.4</div><div class="lbl">Avg Travel Urge</div></div>
+      <div class="stat-chip"><div class="val">₹850</div><div class="lbl">Avg Trip Cost pp</div></div>
+    </div>
+
+    <!-- Tag filters -->
+    <div class="tag-strip" id="tagStrip">
+      <div class="tag active" onclick="filterTag(this,'all')">All Trips</div>
+      <div class="tag" onclick="filterTag(this,'weekend')">Weekend</div>
+      <div class="tag" onclick="filterTag(this,'daytrip')">Day Trip</div>
+      <div class="tag" onclick="filterTag(this,'budget')">Under ₹500</div>
+      <div class="tag" onclick="filterTag(this,'mountains')">Mountains</div>
+      <div class="tag" onclick="filterTag(this,'beach')">Beach</div>
+    </div>
+
+    <!-- Trip Cards -->
+    <div class="sec-h"><h2>Open Trips Near You</h2><a onclick="showScreen('explore')">See all →</a></div>
+
+    <div class="card trip-card" id="trip1">
+      <div class="trip-banner" style="background:linear-gradient(135deg,#4A90D9,#2C5F8A)">
+        <div class="emoji-bg">🏔️</div>
+        <div class="trip-banner-title">Rishikesh Weekend</div>
+      </div>
+      <div class="trip-meta">
+        <span class="badge badge-green">🟢 4 spots left</span>
+        <span class="badge badge-purple">Sat–Sun</span>
+        <span class="badge badge-yellow">🧭 Mentor included</span>
+      </div>
+      <div class="trip-footer">
+        <div>
+          <div class="trip-price">₹1,200 <small>per person</small></div>
+          <div class="avatars" style="margin-top:6px">
+            <div class="av">A</div><div class="av">R</div><div class="av">M</div>
+            <div class="av" style="background:var(--purple-pale);color:var(--purple);font-size:9px">+2</div>
+          </div>
+        </div>
+        <button class="imin-btn" id="imin1" onclick="joinTrip('imin1','trip1','Rishikesh Weekend')">I'm In 🟢</button>
+      </div>
+    </div>
+
+    <div class="card trip-card" id="trip2">
+      <div class="trip-banner" style="background:linear-gradient(135deg,#F5C518,#E8A800)">
+        <div class="emoji-bg">🏖️</div>
+        <div class="trip-banner-title">Goa – Anjuna Sunday</div>
+      </div>
+      <div class="trip-meta">
+        <span class="badge badge-red">🔴 2 spots left</span>
+        <span class="badge badge-purple">Sunday</span>
+        <span class="badge badge-green">4 Vibers matched</span>
+      </div>
+      <div class="trip-footer">
+        <div>
+          <div class="trip-price">₹800 <small>per person</small></div>
+          <div class="avatars" style="margin-top:6px">
+            <div class="av">P</div><div class="av">S</div><div class="av">K</div><div class="av">N</div>
+          </div>
+        </div>
+        <button class="imin-btn" id="imin2" onclick="joinTrip('imin2','trip2','Goa – Anjuna Sunday')">I'm In 🟢</button>
+      </div>
+    </div>
+
+    <div class="card trip-card" id="trip3">
+      <div class="trip-banner" style="background:linear-gradient(135deg,#00C47A,#008C55)">
+        <div class="emoji-bg">🏕️</div>
+        <div class="trip-banner-title">Manali Budget Backpack</div>
+      </div>
+      <div class="trip-meta">
+        <span class="badge badge-green">🟢 6 spots left</span>
+        <span class="badge badge-purple">3 Days</span>
+        <span class="badge badge-yellow">🏷️ Best Deal</span>
+      </div>
+      <div class="trip-footer">
+        <div>
+          <div class="trip-price">₹2,100 <small>per person</small></div>
+          <div class="avatars" style="margin-top:6px">
+            <div class="av">D</div><div class="av">V</div>
+          </div>
+        </div>
+        <button class="imin-btn" id="imin3" onclick="joinTrip('imin3','trip3','Manali Budget Backpack')">I'm In 🟢</button>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:22px">
+      <div style="font-size:36px;margin-bottom:8px">📝</div>
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:6px">Plan your own trip?</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px">Post your itinerary and auto-form your squad</div>
+      <button class="btn btn-primary" onclick="showScreen('post')">Post a Trip ✈️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ EXPLORE ═══════════ -->
+<div class="screen" id="explore">
+  <div class="top-bar">
+    <div><h1>Explore 🗺️</h1><div class="subtitle">Discover destinations</div></div>
+  </div>
+  <div class="scroll-area">
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Search destinations, trips, Bunk Mentors…" oninput="searchTrips(this.value)">
+    </div>
+
+    <div class="tag-strip">
+      <div class="tag active">All India</div>
+      <div class="tag" onclick="this.parentNode.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));this.classList.add('active')">North</div>
+      <div class="tag" onclick="this.parentNode.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));this.classList.add('active')">South</div>
+      <div class="tag" onclick="this.parentNode.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Beaches</div>
+      <div class="tag" onclick="this.parentNode.querySelectorAll('.tag').forEach(t=>t.classList.remove('active'));this.classList.add('active')">Hills</div>
+    </div>
+
+    <div class="sec-h"><h2>Top Student Destinations</h2></div>
+    <div class="dest-grid">
+      <div class="dest-card" onclick="showTripDetail('Rishikesh','🏔️','₹1,200')">
+        <div class="dest-emoji">🏔️</div>
+        <div class="dest-label">Rishikesh<small>Weekend · from ₹1,200</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Goa','🏖️','₹800')">
+        <div class="dest-emoji">🏖️</div>
+        <div class="dest-label">Goa<small>Day trip · from ₹800</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Manali','🏕️','₹2,100')">
+        <div class="dest-emoji">🏕️</div>
+        <div class="dest-label">Manali<small>3 days · from ₹2,100</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Jaipur','🏯','₹600')">
+        <div class="dest-emoji">🏯</div>
+        <div class="dest-label">Jaipur<small>Day trip · from ₹600</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Coorg','🌿','₹1,500')">
+        <div class="dest-emoji">🌿</div>
+        <div class="dest-label">Coorg<small>Weekend · from ₹1,500</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Varanasi','🛕','₹900')">
+        <div class="dest-emoji">🛕</div>
+        <div class="dest-label">Varanasi<small>2 days · from ₹900</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Darjeeling','☕','₹1,800')">
+        <div class="dest-emoji">☕</div>
+        <div class="dest-label">Darjeeling<small>Weekend · from ₹1,800</small></div>
+      </div>
+      <div class="dest-card" onclick="showTripDetail('Hampi','🗿','₹1,100')">
+        <div class="dest-emoji">🗿</div>
+        <div class="dest-label">Hampi<small>Weekend · from ₹1,100</small></div>
+      </div>
+    </div>
+
+    <div class="sec-h" style="margin-top:20px"><h2>🧭 Bunk Mentors</h2></div>
+    <div class="card" style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:36px">👨‍🏫</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">Rahul — Rishikesh Expert</div>
+        <div style="font-size:12px;color:var(--muted)">⭐ 4.9 · 52 trips led · IIT Delhi alum</div>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="showToast('Rahul added to your trip! 🧭')">Add</button>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:14px">
+      <div style="font-size:36px">👩‍🏫</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:14px">Priya — Goa Local Guide</div>
+        <div style="font-size:12px;color:var(--muted)">⭐ 4.8 · 38 trips led · NIT Goa alum</div>
+      </div>
+      <button class="btn btn-sm btn-outline" onclick="showToast('Priya added to your trip! 🧭')">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ POST TRIP ═══════════ -->
+<div class="screen" id="post">
+  <div class="top-bar">
+    <div><h1>Post a Trip 📝</h1><div class="subtitle">Broadcast to the Let's Bunk feed</div></div>
+  </div>
+  <div class="scroll-area">
+    <div class="card">
+      <div class="form-group">
+        <label class="form-label">Destination</label>
+        <input class="form-input" type="text" placeholder="e.g. Lodhi Art District, Delhi" id="dest-input">
+      </div>
+      <div class="form-group date-row">
+        <div>
+          <label class="form-label">Date</label>
+          <input class="form-input" type="date" id="trip-date">
+        </div>
+        <div>
+          <label class="form-label">Squad Size</label>
+          <input class="form-input" type="number" placeholder="4" min="2" max="20" id="squad-size">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Budget per person (₹)</label>
+        <input class="form-input" type="number" placeholder="800" id="budget-pp">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Itinerary Description</label>
+        <textarea class="form-input" placeholder='e.g. "Sunday in Delhi: Lodhi Art District 10AM, street food crawl 1PM, India Gate sunset 5PM. Who&apos;s in?"' id="trip-desc"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Trip Vibe</label>
+        <div class="icon-row" id="vibeRow">
+          <div class="icon-tag" onclick="toggleVibe(this)">🏔️</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🏖️</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🌿</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🏯</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🎭</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🍜</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">📸</div>
+          <div class="icon-tag" onclick="toggleVibe(this)">🎪</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Need Bunk Mentor?</label>
+        <div style="display:flex;gap:10px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+            <input type="radio" name="mentor" value="yes"> Yes please 🧭
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px">
+            <input type="radio" name="mentor" value="no" checked> Not needed
+          </label>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" style="font-size:15px;padding:15px;" onclick="postTrip()">
+        📢 Broadcast to Feed
+      </button>
+    </div>
+
+    <div class="card" style="background:var(--purple-pale);border-color:var(--purple)">
+      <div style="font-size:13px;color:var(--purple);font-weight:600;margin-bottom:8px">💡 How it works</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6">
+        1. Post your plan — it goes live on the feed<br>
+        2. Students tap "I'm In" — added to roster instantly<br>
+        3. Squad verified → auto-dropped into group chat<br>
+        4. Squad formed. Trip on. ✅
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ QUIZ ═══════════ -->
+<div class="screen" id="quiz">
+  <div class="top-bar">
+    <div><h1>Peak Vibes Quiz 🎯</h1><div class="subtitle">Find your perfect travel match</div></div>
+  </div>
+  <div class="scroll-area">
+    <div id="quiz-body">
+      <div class="quiz-progress-wrap">
+        <div class="quiz-progress-bar" id="quiz-bar" style="width:14%"></div>
+      </div>
+      <div style="text-align:center;margin-bottom:6px;font-size:12px;color:var(--muted);font-weight:600" id="quiz-counter">Q1 / 7</div>
+
+      <div id="quiz-content"></div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:24px">
+        <button class="btn btn-outline btn-sm" id="quiz-back" onclick="quizBack()" style="display:none">← Back</button>
+        <button class="btn btn-primary btn-sm" id="quiz-next" onclick="quizNext()" style="margin-left:auto">Next →</button>
+      </div>
+    </div>
+
+    <div id="quiz-result" style="display:none">
+      <div class="quiz-result">
+        <div style="font-size:48px;margin-bottom:8px">🎉</div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px">Your Vibe Type:</div>
+        <div class="result-badge" id="vibe-type">Sunrise Adventurer</div>
+        <p style="color:var(--muted);font-size:13px;margin-bottom:20px">You matched with 3 students nearby who share your energy!</p>
+        <div class="sec-h"><h2>Your Matches 🤝</h2></div>
+        <div class="match-list">
+          <div class="match-item">
+            <div class="match-av" style="background:#EAE6FF">🧑</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:14px">Arjun M. — IIT Delhi, 3rd yr</div>
+              <div style="font-size:12px;color:var(--muted)">Budget ₹1,000–1,500 · Sunrise trekker</div>
+            </div>
+            <span class="badge badge-green">94% match</span>
+          </div>
+          <div class="match-item">
+            <div class="match-av" style="background:#FFE8F5">👩</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:14px">Neha R. — DU, 2nd yr</div>
+              <div style="font-size:12px;color:var(--muted)">Budget ₹800–1,200 · Midday explorer</div>
+            </div>
+            <span class="badge badge-green">87% match</span>
+          </div>
+          <div class="match-item">
+            <div class="match-av" style="background:#DFFAF0">🧑‍🦱</div>
+            <div style="flex:1">
+              <div style="font-weight:700;font-size:14px">Karan S. — BITS Pilani</div>
+              <div style="font-size:12px;color:var(--muted)">Budget ₹1,000–2,000 · Weekend warrior</div>
+            </div>
+            <span class="badge badge-yellow">81% match</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full" style="margin-top:8px" onclick="showScreen('home')">Find Trips with Your Squad 🚀</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PROFILE ═══════════ -->
+<div class="screen" id="profile">
+  <div class="profile-hero">
+    <div class="profile-avatar">🧑‍🎓</div>
+    <div class="profile-name">Arjun Mehta</div>
+    <div class="profile-college">IIT Delhi · 3rd Year · Computer Science</div>
+  </div>
+  <div class="profile-body scroll-area" style="padding-top:0">
+
+    <div class="stats-grid" style="margin-bottom:14px">
+      <div class="stats-cell"><div class="n">5</div><div class="l">Trips Done</div></div>
+      <div class="stats-cell"><div class="n">23</div><div class="l">Squad Members</div></div>
+      <div class="stats-cell"><div class="n">4.9⭐</div><div class="l">Bunk Rating</div></div>
+    </div>
+
+    <div class="verify-card">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:4px">🆔 Verification Status</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Verified students get priority matching</div>
+      <div class="verify-row">
+        <div class="verify-label"><span>📧</span> College Email</div>
+        <span class="verify-status">✅</span>
+      </div>
+      <div class="verify-row">
+        <div class="verify-label"><span>🪪</span> Student ID</div>
+        <span class="verify-status">✅</span>
+      </div>
+      <div class="verify-row">
+        <div class="verify-label"><span>📱</span> Phone OTP</div>
+        <span class="verify-status" id="phone-verify">⏳</span>
+      </div>
+      <button class="btn btn-primary btn-full" style="margin-top:14px" onclick="verifyPhone()">
+        Verify Phone & Unlock All Features 🚀
+      </button>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:14px">💸 Split Billing — Manali Trip</div>
+      <div class="expense-row">
+        <div class="expense-name">🏠 Hostel (3 nights)</div>
+        <div class="expense-amt">₹1,800</div>
+      </div>
+      <div class="expense-row">
+        <div class="expense-name">🚌 Bus tickets</div>
+        <div class="expense-amt">₹600</div>
+      </div>
+      <div class="expense-row">
+        <div class="expense-name">🍜 Food (3 days)</div>
+        <div class="expense-amt">₹900</div>
+      </div>
+      <div class="expense-row">
+        <div class="expense-name">🎒 Activities</div>
+        <div class="expense-amt">₹400</div>
+      </div>
+      <div class="you-owe">
+        <div>
+          <div class="label">Your share (4 people)</div>
+          <div class="amount">₹925</div>
+        </div>
+        <button class="btn btn-sm btn-green" onclick="showToast('Payment link sent to squad! ✅')">Pay ₹925</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:15px;margin-bottom:12px">⚙️ Settings</div>
+      <div style="display:flex;flex-direction:column;gap:0">
+        <div class="verify-row" style="cursor:pointer" onclick="showToast('Edit profile opened 📝')">
+          <div class="verify-label">📝 Edit Profile</div><span>›</span>
+        </div>
+        <div class="verify-row" style="cursor:pointer" onclick="showToast('Notification settings saved ✅')">
+          <div class="verify-label">🔔 Notifications</div><span>›</span>
+        </div>
+        <div class="verify-row" style="cursor:pointer" onclick="showToast('Privacy settings opened 🔒')">
+          <div class="verify-label">🔒 Privacy & Safety</div><span>›</span>
+        </div>
+        <div class="verify-row" style="cursor:pointer;color:var(--red)" onclick="showToast('SOS sent to emergency contacts! 🆘')">
+          <div class="verify-label" style="color:var(--red)">🆘 Emergency SOS</div><span>›</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ CHAT ═══════════ -->
+<div class="screen" id="chat" style="flex-direction:column;height:100vh">
+  <div class="chat-header">
+    <span class="back" onclick="showScreen('home')">‹</span>
+    <div>
+      <h3>🏔️ Rishikesh Weekend Squad</h3>
+      <small>5 members · Student verified · Auto-formed</small>
+    </div>
+    <span style="font-size:20px;cursor:pointer" onclick="showToast('Location sharing: ON 📍')">📍</span>
+  </div>
+  <div class="chat-area" id="chat-area">
+    <div style="text-align:center;padding:10px 0">
+      <span class="badge badge-purple">🔒 Private squad chat · No numbers shared</span>
+    </div>
+    <div class="msg them">
+      <div class="msg-sender">Arjun M.</div>
+      <div class="msg-bubble">Hey squad! Super excited for Rishikesh this weekend 🏔️</div>
+      <div class="msg-time">10:32 AM</div>
+    </div>
+    <div class="msg them">
+      <div class="msg-sender">Neha R.</div>
+      <div class="msg-bubble">Same! Should we book the hostel today? Found one at ₹400/night near the rafting point 🛶</div>
+      <div class="msg-time">10:35 AM</div>
+    </div>
+    <div class="msg me">
+      <div class="msg-bubble">Yes let's book! I'll handle the bus tickets from Delhi. Depart 6 AM Saturday?</div>
+      <div class="msg-time">10:37 AM</div>
+    </div>
+    <div class="msg them">
+      <div class="msg-sender">Karan S.</div>
+      <div class="msg-bubble">6 AM works. I can bring snacks for the bus 🍜 who else is from Delhi?</div>
+      <div class="msg-time">10:39 AM</div>
+    </div>
+    <div class="msg them">
+      <div class="msg-sender">Rahul (Mentor) 🧭</div>
+      <div class="msg-bubble">Hi team! I'm your Bunk Mentor for this trip. Avoid beach road after 9 PM, best café is Café de Goa near ram jhula. See you Saturday! ✅</div>
+      <div class="msg-time">10:42 AM</div>
+    </div>
+    <div class="msg me">
+      <div class="msg-bubble">Thanks Rahul! 🙌 Adding all expenses to split billing as we go</div>
+      <div class="msg-time">10:44 AM</div>
+    </div>
+  </div>
+  <div class="chat-input-bar">
+    <input type="text" id="chat-input" placeholder="Message your squad…" onkeydown="if(event.key==='Enter')sendMsg()">
+    <button class="send-btn" onclick="sendMsg()">➤</button>
+  </div>
+</div>
+
+<!-- ═══════════ BOTTOM NAV ═══════════ -->
+<nav class="app-nav" id="app-nav">
+  <div class="nav-item active" id="nav-home" onclick="showScreen('home')">
+    <span class="nav-icon">🏠</span>Home
+  </div>
+  <div class="nav-item" id="nav-explore" onclick="showScreen('explore')">
+    <span class="nav-icon">🔍</span>Explore
+  </div>
+  <div class="nav-item" id="nav-post" onclick="showScreen('post')">
+    <span class="nav-icon">✈️</span>Post Trip
+  </div>
+  <div class="nav-item" id="nav-chat" onclick="showScreen('chat')">
+    <span class="nav-icon">💬</span>Squad Chat
+  </div>
+  <div class="nav-item" id="nav-profile" onclick="showScreen('profile')">
+    <span class="nav-icon">👤</span>Profile
+  </div>
+</nav>
+
+<!-- ═══════════ TRIP DETAIL MODAL ═══════════ -->
+<div class="modal-overlay" id="trip-modal" onclick="closeModal('trip-modal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-dest-title">Destination</div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── SCREENS ──
+const SCREENS_WITH_NAV = ['home','explore','post','quiz','profile','chat'];
+const NAV_MAP = { home:'nav-home', explore:'nav-explore', post:'nav-post', chat:'nav-chat', profile:'nav-profile' };
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  const nav = document.getElementById('app-nav');
+  if (SCREENS_WITH_NAV.includes(id)) {
+    nav.style.display = 'flex';
+  } else {
+    nav.style.display = 'none';
+  }
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (NAV_MAP[id]) document.getElementById(NAV_MAP[id]).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goHome() {
+  showScreen('home');
+  document.getElementById('app-nav').style.display = 'flex';
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ── JOIN TRIP ──
+function joinTrip(btnId, cardId, name) {
+  const btn = document.getElementById(btnId);
+  if (btn.classList.contains('joined')) return;
+  btn.classList.add('joined');
+  btn.innerHTML = '✅ Joined!';
+  showToast(`✅ You're in! Added to ${name} squad chat 💬`);
+  setTimeout(() => {
+    if (confirm(`Squad formed! Open ${name} group chat?`)) showScreen('chat');
+  }, 800);
+}
+
+// ── FILTER TAGS ──
+function filterTag(el, type) {
+  el.parentNode.querySelectorAll('.tag').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  showToast(`Filtered: ${el.textContent}`);
+}
+
+// ── SEARCH ──
+function searchTrips(val) {
+  if (val.length > 2) showToast(`Searching "${val}"… 🔍`);
+}
+
+// ── TOGGLE VIBE ──
+function toggleVibe(el) {
+  el.classList.toggle('selected');
+}
+
+// ── POST TRIP ──
+function postTrip() {
+  const dest = document.getElementById('dest-input').value;
+  const desc = document.getElementById('trip-desc').value;
+  if (!dest && !desc) { showToast('Please fill in your destination! 📍'); return; }
+  showToast('🎉 Trip posted to feed! Squad matching started…');
+  setTimeout(() => {
+    document.getElementById('dest-input').value = '';
+    document.getElementById('trip-desc').value = '';
+    document.getElementById('budget-pp').value = '';
+    document.getElementById('squad-size').value = '';
+    showScreen('home');
+  }, 1500);
+}
+
+// ── VERIFY PHONE ──
+function verifyPhone() {
+  const otp = prompt('Enter OTP sent to your phone (demo: any 4 digits)');
+  if (otp && otp.length >= 4) {
+    document.getElementById('phone-verify').textContent = '✅';
+    showToast('📱 Phone verified! Full access unlocked 🎉');
+  }
+}
+
+// ── TRIP DETAIL MODAL ──
+function showTripDetail(name, emoji, price) {
+  document.getElementById('modal-dest-title').textContent = emoji + ' ' + name;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="color:var(--muted);font-size:13px;margin-bottom:16px">Popular student destination · Bunk Mentor available</div>
+    <div class="stat-row" style="margin-bottom:16px">
+      <div class="stat-chip"><div class="val">${price}</div><div class="lbl">From (pp)</div></div>
+      <div class="stat-chip"><div class="val">4.8⭐</div><div class="lbl">Avg Rating</div></div>
+    </div>
+    <div style="margin-bottom:16px;font-size:13px;line-height:1.7;color:var(--muted)">
+      ${name} is one of the most popular student destinations on Let's Bunk. Budget hostels, student discounts, and verified Bunk Mentors available year-round.
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="closeModal('trip-modal');showScreen('post');showToast('Creating trip to ${name}! 📝')">Plan a Trip</button>
+      <button class="btn btn-outline" style="flex:1" onclick="closeModal('trip-modal');showScreen('home');showToast('Showing ${name} open trips 🔍')">Open Trips</button>
+    </div>
+  `;
+  document.getElementById('trip-modal').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── QUIZ ──
+const questions = [
+  { q: "What's your daily travel pace?", opts: [["🌅","Sunrise trekker"],["☀️","Midday explorer"],["🌙","Night owl traveler"],["🎲","Spontaneous chaos"]] },
+  { q: "What's your ideal trip budget per day?", opts: [["💰","Under ₹500"],["💸","₹500–1,000"],["💳","₹1,000–2,000"],["🤑","Money no object"]] },
+  { q: "Your ideal travel companion count?", opts: [["👤","Just me + 1"],["👥","Small squad (3–5)"],["🎊","Big group (6+)"],["🎲","Whatever forms"]] },
+  { q: "What do you care most about?", opts: [["🛡️","Safety & verification"],["💸","Budget & deals"],["🎵","Vibe & energy match"],["🗺️","Unique experiences"]] },
+  { q: "Best type of trip?", opts: [["🏔️","Mountains & trekking"],["🏖️","Beaches & chill"],["🏯","Heritage & culture"],["🍜","Food & street culture"]] },
+  { q: "How far in advance do you plan?", opts: [["📅","Weeks ahead"],["📆","A few days before"],["📲","Day before"],["⚡","Same day only"]] },
+  { q: "What matters most in a travel squad?", opts: [["🤝","Same energy & vibe"],["💰","Same budget level"],["🆔","Verified identity"],["😎","All of the above"]] }
+];
+
+const vibeTypes = [
+  "Sunrise Adventurer 🌅","Budget Explorer 🎒","Chill Wanderer 🏖️","Chaos Traveller ⚡",
+  "Heritage Hunter 🏯","Food Trail Blazer 🍜","Mountain Soul 🏔️","Night Owl Nomad 🌙"
+];
+
+let quizAnswers = {};
+let currentQ = 0;
+
+function renderQuiz() {
+  const q = questions[currentQ];
+  const pct = Math.round(((currentQ + 1) / questions.length) * 100);
+  document.getElementById('quiz-bar').style.width = pct + '%';
+  document.getElementById('quiz-counter').textContent = `Q${currentQ + 1} / ${questions.length}`;
+
+  let html = `<div class="quiz-q">${q.q}</div><div class="quiz-options">`;
+  q.opts.forEach((o, i) => {
+    const sel = quizAnswers[currentQ] === i ? ' selected' : '';
+    html += `<div class="quiz-opt${sel}" onclick="selectOpt(${i}, this)">
+      <span class="opt-ico">${o[0]}</span><span>${o[1]}</span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('quiz-content').innerHTML = html;
+  document.getElementById('quiz-back').style.display = currentQ > 0 ? 'inline-flex' : 'none';
+  document.getElementById('quiz-next').textContent = currentQ === questions.length - 1 ? 'See My Vibe! 🎉' : 'Next →';
+}
+
+function selectOpt(i, el) {
+  quizAnswers[currentQ] = i;
+  el.parentNode.querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function quizNext() {
+  if (quizAnswers[currentQ] === undefined) { showToast('Pick an option first! 👆'); return; }
+  if (currentQ < questions.length - 1) {
+    currentQ++;
+    renderQuiz();
+  } else {
+    // Show result
+    const vibe = vibeTypes[quizAnswers[0] ?? 0];
+    document.getElementById('vibe-type').textContent = vibe;
+    document.getElementById('quiz-body').style.display = 'none';
+    document.getElementById('quiz-result').style.display = 'block';
+  }
+}
+
+function quizBack() {
+  if (currentQ > 0) { currentQ--; renderQuiz(); }
+}
+
+// Init quiz when screen opens
+document.getElementById('nav-quiz-dummy') || (() => {
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.addEventListener('click', () => {
+      if (n.id === 'nav-quiz') { currentQ = 0; quizAnswers = {}; renderQuiz(); document.getElementById('quiz-body').style.display='block'; document.getElementById('quiz-result').style.display='none'; }
+    });
+  });
+})();
+
+// Patch showScreen to init quiz
+const _orig = showScreen;
+window.showScreen = function(id) {
+  _orig(id);
+  if (id === 'quiz') {
+    currentQ = 0; quizAnswers = {};
+    document.getElementById('quiz-body').style.display = 'block';
+    document.getElementById('quiz-result').style.display = 'none';
+    renderQuiz();
+  }
+};
+
+// ── CHAT ──
+function sendMsg() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+  const area = document.getElementById('chat-area');
+  const now = new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+  const msgEl = document.createElement('div');
+  msgEl.className = 'msg me';
+  msgEl.innerHTML = `<div class="msg-bubble">${text}</div><div class="msg-time">${now}</div>`;
+  area.appendChild(msgEl);
+  input.value = '';
+  area.scrollTop = area.scrollHeight;
+
+  // Auto-reply
+  const replies = [
+    "Sounds great! 🙌","Count me in 👍","When are we leaving exactly?","I'll check my timetable 📅","Budget looks good to me 💸","Let's go!! 🎉"];
+  setTimeout(() => {
+    const names = ["Arjun M.","Neha R.","Karan S.","Rahul (Mentor) 🧭"];
+    const r = document.createElement('div');
+    r.className = 'msg them';
+    r.innerHTML = `<div class="msg-sender">${names[Math.floor(Math.random()*names.length)]}</div>
+      <div class="msg-bubble">${replies[Math.floor(Math.random()*replies.length)]}</div>
+      <div class="msg-time">${now}</div>`;
+    area.appendChild(r);
+    area.scrollTop = area.scrollHeight;
+  }, 900 + Math.random()*600);
+}
+
+// Init
+document.getElementById('app-nav').style.display = 'none';
+renderQuiz();
+</script>
+</body>
+</html>
